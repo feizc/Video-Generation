@@ -1,7 +1,6 @@
 import torch 
 from dalle_pytorch import DiscreteVAE 
-
-
+import json 
 
 vae = DiscreteVAE(
     image_size=256,
@@ -16,7 +15,7 @@ vae = DiscreteVAE(
 
 
 
-images = torch.randn(4,3,256,256)
+images = torch.randn(2,3,256,256)
 idx = vae.get_codebook_indices(images)
 print(idx)
 print(idx.size())
