@@ -161,6 +161,9 @@ class TimeSformer(nn.Module):
 
 
 
+class 
+
+
 
 
 if __name__ == "__main__":
@@ -173,6 +176,7 @@ if __name__ == "__main__":
     )
 
     video = torch.randn(2, 8, 3, 224, 224) # batch, frame, channel, height, width 
-    pred = model(video)
-    print(pred)
+    # pred = model(video)
+    # print(pred)
 
+    video_feature = torch.
