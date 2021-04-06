@@ -161,8 +161,38 @@ class TimeSformer(nn.Module):
 
 
 
-class 
+class VPTransformer(nn.Module):
+    def __init__(self, *, vqe_dim, num_frames=5, vocabulary_size=8152, depth=12, heads=8, dim_head=64, attn_dropout=0.1, ff_dropout=0.1):
+        super().__init__() 
+        num_dim = heads * dim_head 
+        num_positions = (num_frames + 1) * vqe_dim 
+        self.pos_emb = nn.Embedding(num_positions, num_dim)
+        self.vqe_emb = nn.Linear(vqe_dim, num_dim) 
 
+        self.layers = nn.ModuleList([]) 
+        for _ in range(depth): 
+            self.layers.append(nn.ModuleList([
+                PreNorm(num_dim, Attention(num_dim, dim_head=dim_head, heads=heads, dropout=attn_dropout)),
+                PreNorm(num_dim, Attention(num_dim, dim_head=dim_head, heads=heads, dropout=attn_dropout)),
+                PreNorm(num_dim, FeedForward(num_dim, dropout=ff_dropout))
+            ]))
+        
+        self.to_out = nn.Sequential(
+            nn.LayerNorm(num_dim),
+            nn.Linear(num_dim, vocabulary_size)
+        )
+
+    def forward(self, video_feature): 
+        b, f, n = video_feature.size()
+        video_feature = rearrange(video_feature, 'b f d -> b (f d)') 
+        x = self.vqe_emb(video_feature) + self.pos_emb(torch.arange(video_feature.shape[1])) 
+
+        for (time_attn, spatial_attn, ff) in self.layers: 
+            x = time_attn(x, 'b (f n) d', '(b n) f d', n=n) + x
+            x = spatial_attn(x, 'b (f n) d', '(b f) n d', f=f) + x 
+            x = ff(x) + x 
+        
+        return self.to_out(x)
 
 
 
@@ -179,4 +209,6 @@ if __name__ == "__main__":
     # pred = model(video)
     # print(pred)
 
-    video_feature = torch.
+    video_feature = torch.rand(8, 5, 1024) * 8152 # batch, frame, vqe_dim 
+    video_feature = video_feature.long()
+    
