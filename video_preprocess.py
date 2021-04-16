@@ -1,5 +1,6 @@
 import cv2 
 import os 
+import json 
 
 # 读取视频的信息, 保存到对应的目录, 设定每个视频存n帧 
 def video_read(video_path, save_path, n): 
@@ -35,11 +36,34 @@ def video_generate(img_path_list, save_path, fps):
     videowriter.release()
 
 
+# 数据集读取并保存有效的视频位置 
+def dataset_clean_pipline(dataset_path): 
+    valid_video_list = []
+    file_list = os.listdir(dataset_path) 
+    # 读取每个文件夹下的视频
+    for file_name in file_list: 
+        file_path = os.path.join(dataset_path, file_name)
+        video_name_list = os.listdir(file_path) 
+        
+        for video_name in video_name_list:
+            video_path = os.path.join(file_path, video_name) 
+            try: 
+                vc = cv2.VideoCapture(video_path) 
+                valid_video_list.append(video_path) 
+            except:
+                print(video_path) 
+    with open('valid.json', 'w') as f: 
+        json.dump(valid_video_list, f) 
+
+
 
 if __name__ == "__main__":
     # video_read('data/1.mp4', 'data', 24) 
-    img_path = 'data' 
-    img_name_list = os.listdir(img_path) 
-    img_name_list = [os.path.join(img_path, name) for name in img_name_list if 'png' in name]
+    # img_path = 'data' 
+    # img_name_list = os.listdir(img_path) 
+    # img_name_list = [os.path.join(img_path, name) for name in img_name_list if 'png' in name]
     # print(img_name_list)
-    video_generate(img_name_list, 'data/2.mp4', 5)
+    # video_generate(img_name_list, 'data/2.mp4', 5) 
+    dataset_path = '/apdcephfs/share_47076/zekangli/NIPS2021/kinetics600/data' 
+    dataset_clean_pipline(dataset_path) 
+
